@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <!-- Link to the last version of BabylonJS -->
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <!-- Link to the last version of BabylonJS loaders to enable loading filetypes such as .gltf -->
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <!-- Link to pep.js to ensure pointer events work consistently in all browsers -->
+    <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            background: #e3e3e3;
+        }
+
+        #renderCanvas {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            margin: 10%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        let babylon = window.BABYLON
+        window.addEventListener('load', function () {
+            let canvas = document.querySelector('#renderCanvas'),
+                engine = new babylon.Engine(canvas, true),
+                createScene = i => {
+
+                    // This is really important to tell Babylon.js to use decomposeLerp and matrix interpolation
+                    BABYLON.Animation.AllowMatricesInterpolation = true;
+
+
+                    let scene = new babylon.Scene(engine),
+
+                        camera = new babylon.ArcRotateCamera('camera', (2 * Math.PI / 360) * 0, (2 * Math.PI /
+                                360) * 45, 14, new babylon
+                            .Vector3(0, 0, 0),
+                            scene),
+                        light2 = new BABYLON.HemisphericLight("light2", new BABYLON.Vector3(0, 10, 0), scene),
+                        light = new babylon.DirectionalLight('light1', new babylon.Vector3(-11, -8, -10), scene),
+                        shadowGenerator = new babylon.ShadowGenerator(1048, light),
+
+                        ground = babylon.Mesh.CreateGround('ground', 10, 10, 1, scene, false),
+
+                        sphere = babylon.MeshBuilder.CreateSphere('sphere', {
+                            segments: 8,
+                            diameter: 2
+                        }, scene),
+
+                        box1 = babylon.Mesh.CreateBox('box1', 1, scene),
+                        box2 = babylon.MeshBuilder.CreateBox('box2', {
+                            size: 2
+                        }, scene),
+                        materialground = new babylon.StandardMaterial('ground', scene),
+                        materialbox1 = new babylon.StandardMaterial('texture1', scene),
+                        materialbox2 = new babylon.StandardMaterial('texture2', scene),
+                        //parameter2 the property concern this can be any mesh property 
+                        // depending upon what you want to change,here we want to scale an
+                        //object on the x axis , so it will be 'scaling.x'
+                        animationbox1 = new babylon.Animation('animationbox1', 'position.x', 100, BABYLON.Animation
+                            .ANIMATIONTYPE_FLOAT,
+                            BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE)
+
+                            light2.intensity = 0.5;
+                    materialground.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+                    materialground.specularColor = new BABYLON.Color3(1, 1, 1);
+                    ground.material = materialground;
+                    ground.receiveShadows = true;
+                    camera.setTarget(babylon.Vector3.Zero())
+                    camera.attachControl(canvas, true)
+                    camera.wheelDeltaPercentage = 0.01;
+                    shadowGenerator.useBlurExponentialShadowMap = true
+                    shadowGenerator.blurKernel = 32
+
+                    sphere.position.y = 2
+                    sphere.position.x = 5
+                    sphere.position.z = 5
+                    box1.position.y = 2
+                    box1.position.x = 1
+                    box2.position.z = -5
+                    box2.position.y = 2
+                    materialbox1.diffuseColor = new babylon.Color3(0, 1, 0)
+                    box1.material = materialbox1
+                    box2.material = materialbox2
+                    shadowGenerator.addShadowCaster(box1, true)
+                    shadowGenerator.addShadowCaster(box2, true)
+                    shadowGenerator.addShadowCaster(sphere, true)
+                    animationbox1.setKeys([{
+                        frame: 1,
+                        value: 1
+                    }, {
+                        frame: 50,
+                        value: 0
+                    }, {
+                        frame: 100,
+                        value: 1
+                    }])
+                    box1.animations.push(animationbox1)
+                    window.box = box1
+                    scene.beginAnimation(box1, 0, 100, true)
+                    setInterval(() => {
+                        materialbox2.diffuseColor = new babylon.Color3(Math.random(), Math.random(),
+                            Math.random())
+                    }, 1000);
+
+
+                    babylon.SceneLoader.ImportMesh('Rabbit', '/scenes/', 'Rabbit.babylon', scene, function (
+                        newMeshes, particleSystems, skeletons) {
+                        newMeshes[1].scaling = new babylon.Vector3(0.01, 0.01, 0.01)
+                        newMeshes[1].position.z = 2
+                        shadowGenerator.getShadowMap().renderList.push(newMeshes[1]);
+                        scene.beginAnimation(skeletons[0], 0, 100, true, 0.8);
+                    })
+
+                    babylon.SceneLoader.ImportMesh("", "./scenes/", "dummy3.babylon", scene, (newmesh, prticle,
+                        skeleton) => {
+                        let skeleton1 = skeleton[0],
+                            runRange = skeleton1.getAnimationRange("YBot_Run"),
+                            idleRange = skeleton1.getAnimationRange("YBot_Idle"),
+                            walkRange = skeleton1.getAnimationRange("YBot_Walk")
+
+
+                        for (var index = 0; index < newmesh.length; index++) {
+                            shadowGenerator.addShadowCaster(newmesh[index], true);
+                            newmesh[index].receiveShadows = false;
+                        }
+                        var helper = scene.createDefaultEnvironment({
+                            enableGroundShadow: true
+                        });
+                        helper.setMainColor(babylon.Color3.Gray())
+                        // if (runRange) scene.beginAnimation(skeleton1, runRange.from, runRange.to, true)
+
+                        let advancedTexture = babylon.GUI.AdvancedDynamicTexture.CreateFullscreenUI(
+                            'UI')
+                        let Uipanel = new babylon.GUI.StackPanel()
+                        Uipanel = Object.assign(Uipanel, {
+                            left: 0,
+                            top: 0,
+                            fontSize: "10px",
+                            width: '100px',
+
+                            horizontalAlignment: BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT,
+                            verticalAlignment: BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER
+                        })
+                        advancedTexture.addControl(Uipanel)
+
+                        let idleanimation = scene.beginWeightedAnimation(skeleton1, idleRange.from,
+                            idleRange.to, 0, true)
+                        let walkanimation = scene.beginWeightedAnimation(skeleton1, walkRange.from,
+                            walkRange.to, 0, true)
+                        let runanimation = scene.beginWeightedAnimation(skeleton1, runRange.from,
+                            runRange.to, 0, true)
+
+                        var params = [{
+                                name: "Idle",
+                                anim: idleanimation
+                            },
+                            {
+                                name: "Walk",
+                                anim: walkanimation
+                            },
+                            {
+                                name: "Run",
+                                anim: runanimation
+                            }
+                        ]
+
+                        params.forEach((param) => {
+                            let header = new BABYLON.GUI.TextBlock();
+                            header.text = param.name + ":" + param.anim.weight.toFixed(2);
+                            header.height = "40px";
+                            header.color = "green";
+                            header.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                            header.paddingTop = "10px";
+                            Uipanel.addControl(header);
+                            let slider = new BABYLON.GUI.Slider();
+                            slider.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                            slider.minimum = 0;
+                            slider.maximum = 1;
+                            slider.color = "green";
+                            slider.value = param.anim.weight;
+                            slider.height = "20px";
+                            slider.width = "100px";
+                            Uipanel.addControl(slider);
+                            slider.onValueChangedObservable.add(v => {
+                                param.anim.restart()
+                                param.anim.weight = v;
+                                header.text = param.name + ":" + param.anim.weight.toFixed(
+                                    2);
+                            })
+                            param.anim._slider = slider;
+                        });
+
+
+                        let button1 = babylon.GUI.Button.CreateSimpleButton('but1', 'play walk')
+                        button1 = Object.assign(button1, {
+                            paddingTop: "10px",
+                            height: "50px",
+                            color: "red"
+                        })
+                        button1.onPointerDownObservable.add(() => {
+                            scene.beginAnimation(skeleton1, walkRange.from, walkRange.to, true)
+                        })
+
+                        Uipanel.addControl(button1)
+
+                        let button2 = babylon.GUI.Button.CreateSimpleButton('but2', 'play run')
+                        button2 = Object.assign(button2, {
+                            paddingTop: "10px",
+                            height: "50px",
+                            color: "white"
+                        })
+                        button2.onPointerDownObservable.add(() => {
+                            scene.beginAnimation(skeleton1, runRange.from, runRange.to, true)
+                        })
+
+                        Uipanel.addControl(button2)
+
+
+                    })
+
+                    return scene
+                },
+                scene = createScene()
+
+            engine.runRenderLoop(i => {
+                scene.render()
+            })
+
+            window.addEventListener('resize', function () {
+                engine.resize()
+            })
+        });
+    </script>
+</body>
+
+</html>
