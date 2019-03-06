@@ -59,7 +59,7 @@
                             scene),
                         light2 = new BABYLON.HemisphericLight("light2", new BABYLON.Vector3(0, 10, 0), scene),
                         light = new babylon.DirectionalLight('light1', new babylon.Vector3(-11, -8, -10), scene),
-                        shadowGenerator = new babylon.ShadowGenerator(1048, light),
+                        shadowGenerator = new babylon.ShadowGenerator(888, light),
 
                         ground = babylon.Mesh.CreateGround('ground', 10, 10, 1, scene, false),
 
@@ -67,32 +67,42 @@
                             segments: 8,
                             diameter: 2
                         }, scene),
-
+                        torus = babylon.Mesh.CreateTorus('torus', 4, 1, 60, scene, false),
                         box1 = babylon.Mesh.CreateBox('box1', 1, scene),
                         box2 = babylon.MeshBuilder.CreateBox('box2', {
                             size: 2
                         }, scene),
+                        materialtorus = new babylon.StandardMaterial('torus1', scene),
                         materialground = new babylon.StandardMaterial('ground', scene),
                         materialbox1 = new babylon.StandardMaterial('texture1', scene),
                         materialbox2 = new babylon.StandardMaterial('texture2', scene),
                         //parameter2 the property concern this can be any mesh property 
                         // depending upon what you want to change,here we want to scale an
                         //object on the x axis , so it will be 'scaling.x'
-                        animationbox1 = new babylon.Animation('animationbox1', 'position.x', 100, BABYLON.Animation
+                        animationbox1 = new babylon.Animation('animationbox1', 'position.x', 60, BABYLON.Animation
                             .ANIMATIONTYPE_FLOAT,
-                            BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE)
+                            BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE),
+                        animationtorus = new babylon.Animation('torusanimation', "position", 190, BABYLON.Animation
+                            .ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE)
 
-                            light2.intensity = 0.5;
+
+                    //设置元件的属性
+                    light2.intensity = 0.5;
                     materialground.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
                     materialground.specularColor = new BABYLON.Color3(1, 1, 1);
+                    materialtorus.diffuseColor = new babylon.Color3(1, 0.5, 0)
+                    materialtorus.specularColor = new babylon.Color3(1, 1, 1)
+                    torus.material = materialtorus
                     ground.material = materialground;
+                    shadowGenerator.addShadowCaster(torus, true)
                     ground.receiveShadows = true;
                     camera.setTarget(babylon.Vector3.Zero())
                     camera.attachControl(canvas, true)
                     camera.wheelDeltaPercentage = 0.01;
                     shadowGenerator.useBlurExponentialShadowMap = true
-                    shadowGenerator.blurKernel = 32
-
+                    shadowGenerator.blurKernel = 1111
+                    torus.position.y = 3
+                    torus.position.x = -3
                     sphere.position.y = 2
                     sphere.position.x = 5
                     sphere.position.z = 5
@@ -117,7 +127,27 @@
                         value: 1
                     }])
                     box1.animations.push(animationbox1)
+                    let corusnextpos = torus.position.add(new babylon.Vector3(0, 3, 0))
+                    animationtorus.setKeys([{
+                        frame: 0,
+                        value: torus.position
+                    }, {
+                        frame: 50,
+                        value: corusnextpos
+                    }, {
+                        frame: 100,
+                        value: torus.position
+                    }])
+
+                    let easingFun = new babylon.CircleEase()
+                    easingFun.setEasingMode(babylon.EasingFunction.EASINGMODE_EASINGIN)
+                    // animationtorus.setEasingFunction(easingFun)
+
+                    torus.animations.push(animationtorus)
+
+
                     window.box = box1
+                    scene.beginAnimation(torus, 0, 100, true)
                     scene.beginAnimation(box1, 0, 100, true)
                     setInterval(() => {
                         materialbox2.diffuseColor = new babylon.Color3(Math.random(), Math.random(),
