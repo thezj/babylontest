@@ -155,10 +155,40 @@
                     }, 1000);
 
 
+                    babylon.SceneLoader.ImportMesh('him', '/scenes/', 'Dude.babylon', scene, function (
+                        newMeshes, particleSystems, skeletons) {
+                        var dude = newMeshes[0];
+                        newMeshes.map(m => {
+                            shadowGenerator.addShadowCaster(m, true)
+                        })
+                        dude.position.z = 2
+                        dude.position.x = -2
+                        dude.scaling = new babylon.Vector3(0.02, 0.02, 0.02)
+
+                        newMeshes.map(m => {
+                            let instance = m.createInstance('instance1')
+                            instance.parent = m.parent
+                            instance.position = m.position.clone()
+                            instance.position.z += 50 * 1
+                            instance.position.x -= 50 * 1
+                        })
+
+
+                        scene.beginAnimation(skeletons[0], 0, 100, true, 2);
+
+
+                        // for (let i = 0; i < 3; i++) {
+                        //     let instance = 
+                        // }
+
+                    })
+
+
+
                     babylon.SceneLoader.ImportMesh('Rabbit', '/scenes/', 'Rabbit.babylon', scene, function (
                         newMeshes, particleSystems, skeletons) {
-                        newMeshes[1].scaling = new babylon.Vector3(0.01, 0.01, 0.01)
-                        newMeshes[1].position.z = 2
+                        newMeshes[0].scaling = new babylon.Vector3(0.01, 0.01, 0.01)
+                        newMeshes[0].position.z = 2
                         shadowGenerator.getShadowMap().renderList.push(newMeshes[1]);
                         scene.beginAnimation(skeletons[0], 0, 100, true, 0.8);
                     })
