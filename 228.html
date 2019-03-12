@@ -52,17 +52,23 @@
 
 
                     let scene = new babylon.Scene(engine),
-
+                        //rotatecamera rotating around a 3d point 
                         camera = new babylon.ArcRotateCamera('camera', (2 * Math.PI / 360) * 0, (2 * Math.PI /
                                 360) * 45, 14, new babylon
                             .Vector3(0, 0, 0),
+                            scene),
+                        //you can move around the world with mouse and keyboark(let right up down)
+                        freecamera = new babylon.FreeCamera('freecamera', new babylon.Vector3(0, 0, 0), scene),
+                        //move in your world with your touch screen
+                        touchcamera = new babylon.TouchCamera('touchcamera', new babylon.Vector3(0, 5, 2),
                             scene),
                         light2 = new BABYLON.HemisphericLight("light2", new BABYLON.Vector3(0, 10, 0), scene),
                         light = new babylon.DirectionalLight('light1', new babylon.Vector3(-11, -8, -10), scene),
                         shadowGenerator = new babylon.ShadowGenerator(888, light),
 
                         ground = babylon.Mesh.CreateGround('ground', 10, 10, 1, scene, false),
-
+                        hdrTexture = new BABYLON.HDRCubeTexture("/textures/room.hdr", scene, 512),
+                        glass = new BABYLON.PBRMaterial("glass", scene),
                         sphere = babylon.MeshBuilder.CreateSphere('sphere', {
                             segments: 8,
                             diameter: 2
@@ -82,27 +88,67 @@
                         animationbox1 = new babylon.Animation('animationbox1', 'position.x', 60, BABYLON.Animation
                             .ANIMATIONTYPE_FLOAT,
                             BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE),
-                        animationtorus = new babylon.Animation('torusanimation', "position", 190, BABYLON.Animation
+                        animationtorus = new babylon.Animation('torusanimation', "position", 19, BABYLON.Animation
                             .ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE)
 
 
+
+                    //create the 3d ui manager
+
+
+
+
+
+                    //set gravity for the scene 
+                    scene.gravity = new babylon.Vector3(0, -1, 0)
+                    // enable collisions
+                    scene.collisionsEnabled = true
+                    //apply collision and gravity to the active camera
+                    touchcamera.checkCollisions = true
+                    ground.checkCollisions = true
+                    box2.checkCollisions = true
+
+                    touchcamera.applyGravity = true
+                    //set the ellipsoid around te camera
+                    touchcamera.ellipsoid = new babylon.Vector3(1, 1, 1)
+
+                    //设置摄像机
+                    camera.setTarget(babylon.Vector3.Zero())
+                    camera.wheelDeltaPercentage = 0.01;
+                    //激活摄像机
+                    scene.activeCamera = touchcamera;
+                    // camera.attachControl(canvas, true)
+                    touchcamera.attachControl(canvas, true);
                     //设置元件的属性
+
+                    glass.reflectionTexture = hdrTexture;
+                    glass.refractionTexture = hdrTexture;
+                    glass.linkRefractionWithTransparency = true;
+                    glass.indexOfRefraction = 0.52;
+                    glass.alpha = 0;
+                    glass.microSurface = 1;
+                    glass.reflectivityColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+                    glass.albedoColor = new BABYLON.Color3(0.85, 0.85, 0.85);
+
                     light2.intensity = 0.5;
                     materialground.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
                     materialground.specularColor = new BABYLON.Color3(1, 1, 1);
                     materialtorus.diffuseColor = new babylon.Color3(1, 0.5, 0)
                     materialtorus.specularColor = new babylon.Color3(1, 1, 1)
-                    torus.material = materialtorus
+                    torus.material = new babylon.StandardMaterial('mat', scene)
+                    torus.material.diffuseTexture = new babylon.Texture('./textures/gold.jpg', scene)
+                    torus.material.specularColor = new babylon.Color3(1, 1, 1)
+
                     ground.material = materialground;
                     shadowGenerator.addShadowCaster(torus, true)
                     ground.receiveShadows = true;
-                    camera.setTarget(babylon.Vector3.Zero())
-                    camera.attachControl(canvas, true)
-                    camera.wheelDeltaPercentage = 0.01;
+
+
                     shadowGenerator.useBlurExponentialShadowMap = true
                     shadowGenerator.blurKernel = 1111
                     torus.position.y = 3
                     torus.position.x = -3
+                    sphere.material = glass
                     sphere.position.y = 2
                     sphere.position.x = 5
                     sphere.position.z = 5
@@ -112,7 +158,10 @@
                     box2.position.y = 2
                     materialbox1.diffuseColor = new babylon.Color3(0, 1, 0)
                     box1.material = materialbox1
-                    box2.material = materialbox2
+
+                    box2.material = new babylon.StandardMaterial('mat', scene)
+                    box2.material.diffuseTexture = new babylon.Texture('./textures/0.jpg', scene)
+
                     shadowGenerator.addShadowCaster(box1, true)
                     shadowGenerator.addShadowCaster(box2, true)
                     shadowGenerator.addShadowCaster(sphere, true)
@@ -153,6 +202,28 @@
                         materialbox2.diffuseColor = new babylon.Color3(Math.random(), Math.random(),
                             Math.random())
                     }, 1000);
+
+
+
+                    //create 3d ui manager
+                    let d3uimanager = new babylon.GUI.GUI3DManager(scene)
+                    let d3panel = new babylon.GUI.SpherePanel()
+                    d3panel.margin = 0.3
+                    d3panel.radius = 5
+                    d3panel.position.y = 4
+                    d3panel.position.x = 0
+                    d3panel.position.z = 0
+                    d3uimanager.addControl(d3panel)
+
+                    for (let i = 0; i < 20; i++) {
+                        let d3panelbutton = new babylon.GUI.HolographicButton('orientation')
+                        d3panelbutton.text = 'button #' + d3panel.children.length
+                        d3panelbutton.onPointerDownObservable.add(() => {
+                            console.log('button #' + d3panel.children.length)
+                        })
+                        d3panel.addControl(d3panelbutton)
+                    }
+
 
 
                     babylon.SceneLoader.ImportMesh('him', '/scenes/', 'Dude.babylon', scene, function (
@@ -219,7 +290,6 @@
                             top: 0,
                             fontSize: "10px",
                             width: '100px',
-
                             horizontalAlignment: BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT,
                             verticalAlignment: BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER
                         })
@@ -296,6 +366,8 @@
                         })
 
                         Uipanel.addControl(button2)
+
+
 
 
                     })
