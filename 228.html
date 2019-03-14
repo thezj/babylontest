@@ -105,10 +105,11 @@
                     scene.collisionsEnabled = true
                     //apply collision and gravity to the active camera
                     touchcamera.checkCollisions = true
+                    touchcamera.rotation = new babylon.Vector3(0.5, 3, 0)
                     ground.checkCollisions = true
                     box2.checkCollisions = true
 
-                    touchcamera.applyGravity = true
+                    // touchcamera.applyGravity = true
                     //set the ellipsoid around te camera
                     touchcamera.ellipsoid = new babylon.Vector3(1, 1, 1)
 
@@ -159,6 +160,8 @@
                     materialbox1.diffuseColor = new babylon.Color3(0, 1, 0)
                     box1.material = materialbox1
 
+
+
                     box2.material = new babylon.StandardMaterial('mat', scene)
                     box2.material.diffuseTexture = new babylon.Texture('./textures/0.jpg', scene)
 
@@ -167,13 +170,13 @@
                     shadowGenerator.addShadowCaster(sphere, true)
                     animationbox1.setKeys([{
                         frame: 1,
-                        value: 1
+                        value: 3
                     }, {
                         frame: 50,
                         value: 0
                     }, {
                         frame: 100,
-                        value: 1
+                        value: 3
                     }])
                     box1.animations.push(animationbox1)
                     let corusnextpos = torus.position.add(new babylon.Vector3(0, 3, 0))
@@ -208,12 +211,21 @@
                     //create 3d ui manager
                     let d3uimanager = new babylon.GUI.GUI3DManager(scene)
                     let d3panel = new babylon.GUI.SpherePanel()
+                    let PlanePanel = new babylon.GUI.PlanePanel()
+                    PlanePanel.position = new babylon.Vector3(0, 0, 0)
                     d3panel.margin = 0.3
                     d3panel.radius = 5
                     d3panel.position.y = 4
                     d3panel.position.x = 0
                     d3panel.position.z = 0
                     d3uimanager.addControl(d3panel)
+                    d3uimanager.addControl(PlanePanel)
+
+                    let box1button = new babylon.GUI.MeshButton3D(box1, 'box1button')
+                    box1button.onPointerClickObservable.add(() => {
+                        console.log('you clicked box1')
+                    })
+                    PlanePanel.addControl(box1button)
 
                     for (let i = 0; i < 20; i++) {
                         let d3panelbutton = new babylon.GUI.HolographicButton('orientation')
@@ -222,6 +234,8 @@
                             console.log('button #' + d3panel.children.length)
                         })
                         d3panel.addControl(d3panelbutton)
+
+
                     }
 
 
@@ -263,7 +277,7 @@
                         shadowGenerator.getShadowMap().renderList.push(newMeshes[1]);
                         scene.beginAnimation(skeletons[0], 0, 100, true, 0.8);
                     })
-
+                    let dummymesh
                     babylon.SceneLoader.ImportMesh("", "./scenes/", "dummy3.babylon", scene, (newmesh, prticle,
                         skeleton) => {
                         let skeleton1 = skeleton[0],
@@ -271,7 +285,7 @@
                             idleRange = skeleton1.getAnimationRange("YBot_Idle"),
                             walkRange = skeleton1.getAnimationRange("YBot_Walk")
 
-
+                        dummymesh = newmesh[0]
                         for (var index = 0; index < newmesh.length; index++) {
                             shadowGenerator.addShadowCaster(newmesh[index], true);
                             newmesh[index].receiveShadows = false;
@@ -370,6 +384,16 @@
 
 
 
+                    })
+
+                    //register a function to be called before every frame render
+                    scene.registerBeforeRender(function () {
+                        if (dummymesh && box1.intersectsMesh(dummymesh, true)) {
+                            box1.material.emissiveColor = new babylon.Color3(1, 0, 0)
+                        } else {
+                            box1.material.emissiveColor = new babylon.Color3(0, 1, 0)
+
+                        }
                     })
 
                     return scene
