@@ -6,13 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
-    <!-- Link to the last version of BabylonJS -->
     <script src="https://preview.babylonjs.com/babylon.js"></script>
-    <!-- Link to the last version of BabylonJS loaders to enable loading filetypes such as .gltf -->
     <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-    <!-- Link to pep.js to ensure pointer events work consistently in all browsers -->
-    <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
-    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
 
     <style>
         html,
@@ -28,19 +24,82 @@
             background: #e3e3e3;
         }
 
-        #renderCanvas {
+        .renderCanvas {
             position: absolute;
             width: 80%;
             height: 80%;
             margin: 10%;
+            border: 1px solid gray;
             touch-action: none;
         }
     </style>
 </head>
 
 <body>
-    <canvas id="renderCanvas"></canvas>
+    <canvas class="renderCanvas"></canvas>
     <script>
+        // 190716
+        let babylon = BABYLON
+        let canvas = document.querySelector('.renderCanvas') //get the canvas element 
+        let engine = new babylon.Engine(canvas, true) //generate the babylon 3d engine
+        let angle = Math.PI / 180 // define a angle unit
+
+        //add the create scene function
+        let createScene = function () {
+            let scene = new babylon.Scene(engine) //create the scene space
+            //水平角和俯仰角都是逆时针旋转的
+            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 0, 13, new babylon.Vector3(0, 5, 0), scene) //add camera 
+            camera.attachControl(canvas, true) //attach the canvas
+
+            let light1 = new babylon.HemisphericLight('light1', new babylon.Vector3(0, 5, 0), scene) //add lights to the scene
+            light1.intensity = 0.5
+            let light2 = new babylon.PointLight('light2', new babylon.Vector3(13, 3, 13), scene) //add lights to the scene
+            light2.intensity = 0.3
+
+            let sphere = new babylon.MeshBuilder.CreateSphere('sphere', { diameter: 2 }, scene) //add manipulate mesh in the scene
+
+            return scene
+        }
+
+        let scene = createScene() //call the createscene function
+
+        //register a render loop to repeat render the scene
+        engine.runRenderLoop(function () {
+            scene.render()
+        })
+
+        window.addEventListener('resize', function () {
+            engine.resize()
+        })
+
+        //use the meshbuilder method of shape creation
+        let faceColors = [new babylon.Color4(255, 0, 0, 255),
+        new babylon.Color4(0, 255, 0, 255),
+        new babylon.Color4(0, 0, 255, 255),
+        new babylon.Color4(255, 255, 0, 255),
+        new babylon.Color4(255, 0, 255, 255),
+        new babylon.Color4(0, 255, 255, 255)]
+        let box1 = babylon.MeshBuilder.CreateBox('box1', { height: 5, width: 2, depth: 0.5, faceColors }, scene)
+        box1.position = new babylon.Vector3(2, 0, 2)
+
+        let sphere1 = babylon.MeshBuilder.CreateSphere('sphere1', { diameter: 1, diameterX: 2 }, scene)
+        sphere1.position = new babylon.Vector3(2, 0, -2)
+
+        let plane1 = babylon.MeshBuilder.CreatePlane('plane1', { width: 5, height: 5, sideOrientation: BABYLON.Mesh.DOUBLESIDE }, scene)
+        plane1.rotation = new babylon.Vector3(Math.PI / 2, 0, 0)
+        plane1.position = new babylon.Vector3(0, 0.3, 0)
+        let plane1Meterial = new babylon.StandardMaterial('plane1Meterial', scene)
+        plane1.material = plane1Meterial
+        plane1Meterial.diffuseTexture = new babylon.Texture('./woodboard.jpg', scene)
+        let ground1 = babylon.MeshBuilder.CreateGround('ground1', { width: 12, height: 12, subdivisions: 4 }, scene)
+
+
+    </script>
+
+
+
+    <!-- <script> 
+        older
         let babylon = window.BABYLON
         window.addEventListener('load', function () {
             let canvas = document.querySelector('#renderCanvas'),
@@ -54,8 +113,8 @@
                     let scene = new babylon.Scene(engine),
                         //rotatecamera rotating around a 3d point 
                         camera = new babylon.ArcRotateCamera('camera', (2 * Math.PI / 360) * 0, (2 * Math.PI /
-                                360) * 45, 14, new babylon
-                            .Vector3(0, 0, 0),
+                            360) * 45, 14, new babylon
+                                .Vector3(0, 0, 0),
                             scene),
                         //you can move around the world with mouse and keyboark(let right up down)
                         freecamera = new babylon.FreeCamera('freecamera', new babylon.Vector3(0, 0, 0), scene),
@@ -63,7 +122,8 @@
                         touchcamera = new babylon.TouchCamera('touchcamera', new babylon.Vector3(0, 5, 2),
                             scene),
                         light2 = new BABYLON.HemisphericLight("light2", new BABYLON.Vector3(0, 10, 0), scene),
-                        light = new babylon.DirectionalLight('light1', new babylon.Vector3(-11, -8, -10), scene),
+                        light = new babylon.DirectionalLight('light1', new babylon.Vector3(-11, -8, -10),
+                            scene),
                         shadowGenerator = new babylon.ShadowGenerator(888, light),
 
                         ground = babylon.Mesh.CreateGround('ground', 10, 10, 1, scene, false),
@@ -85,10 +145,12 @@
                         //parameter2 the property concern this can be any mesh property 
                         // depending upon what you want to change,here we want to scale an
                         //object on the x axis , so it will be 'scaling.x'
-                        animationbox1 = new babylon.Animation('animationbox1', 'position.x', 60, BABYLON.Animation
+                        animationbox1 = new babylon.Animation('animationbox1', 'position.x', 60, BABYLON
+                            .Animation
                             .ANIMATIONTYPE_FLOAT,
                             BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE),
-                        animationtorus = new babylon.Animation('torusanimation', "position", 19, BABYLON.Animation
+                        animationtorus = new babylon.Animation('torusanimation', "position", 19, BABYLON
+                            .Animation
                             .ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE)
 
 
@@ -269,6 +331,18 @@
                     })
 
 
+                    babylon.SceneLoader.ImportMesh('', "./scenes/", "link.glb", scene, function (meshes,
+                        particleSystems, skeletons) {
+
+                        meshes[0].scaling = new babylon.Vector3(0.1, 0.1, 0.1)
+                        meshes[0].position.z = -1
+                        for (var index = 0; index < meshes.length; index++) {
+                            shadowGenerator.addShadowCaster(meshes[index], true);
+                            meshes[index].receiveShadows = false;
+                        }
+
+                    });
+
 
                     babylon.SceneLoader.ImportMesh('Rabbit', '/scenes/', 'Rabbit.babylon', scene, function (
                         newMeshes, particleSystems, skeletons) {
@@ -317,17 +391,17 @@
                             runRange.to, 0, true)
 
                         var params = [{
-                                name: "Idle",
-                                anim: idleanimation
-                            },
-                            {
-                                name: "Walk",
-                                anim: walkanimation
-                            },
-                            {
-                                name: "Run",
-                                anim: runanimation
-                            }
+                            name: "Idle",
+                            anim: idleanimation
+                        },
+                        {
+                            name: "Walk",
+                            anim: walkanimation
+                        },
+                        {
+                            name: "Run",
+                            anim: runanimation
+                        }
                         ]
 
                         params.forEach((param) => {
@@ -335,11 +409,13 @@
                             header.text = param.name + ":" + param.anim.weight.toFixed(2);
                             header.height = "40px";
                             header.color = "green";
-                            header.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                            header.textHorizontalAlignment = BABYLON.GUI.Control
+                                .HORIZONTAL_ALIGNMENT_LEFT;
                             header.paddingTop = "10px";
                             Uipanel.addControl(header);
                             let slider = new BABYLON.GUI.Slider();
-                            slider.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+                            slider.horizontalAlignment = BABYLON.GUI.Control
+                                .HORIZONTAL_ALIGNMENT_LEFT;
                             slider.minimum = 0;
                             slider.maximum = 1;
                             slider.color = "green";
@@ -350,8 +426,9 @@
                             slider.onValueChangedObservable.add(v => {
                                 param.anim.restart()
                                 param.anim.weight = v;
-                                header.text = param.name + ":" + param.anim.weight.toFixed(
-                                    2);
+                                header.text = param.name + ":" + param.anim.weight
+                                    .toFixed(
+                                        2);
                             })
                             param.anim._slider = slider;
                         });
@@ -407,7 +484,7 @@
             window.addEventListener('resize', function () {
                 engine.resize()
             })
-        });
+        }); -->
     </script>
 </body>
 
