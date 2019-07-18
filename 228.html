@@ -48,7 +48,7 @@
         let createScene = function () {
             let scene = new babylon.Scene(engine) //create the scene space
             //水平角和俯仰角都是逆时针旋转的
-            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 0, 13, new babylon.Vector3(0, 5, 0), scene) //add camera 
+            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 0, 23, new babylon.Vector3(0, 0, 0), scene) //add camera 
             camera.attachControl(canvas, true) //attach the canvas
 
             let light1 = new babylon.HemisphericLight('light1', new babylon.Vector3(0, 5, 0), scene) //add lights to the scene
