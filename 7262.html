@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.bootcss.com/babylonjs/4.1.0-alpha.9/babylon.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            background: #e3e3e3;
+        }
+
+        .renderCanvas {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            margin: 10%;
+            border: 1px solid gray;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="renderCanvas"></canvas>
+    <script>
+        // 190716
+        let babylon = BABYLON
+        let canvas = document.querySelector('.renderCanvas') //get the canvas element 
+        let engine = new babylon.Engine(canvas, true) //generate the babylon 3d engine
+        let angle = Math.PI / 180 // define a angle unit
+
+        //add the create scene function
+        let createScene = function () {
+            let scene = new babylon.Scene(engine) //create the scene space
+            //水平角和俯仰角都是逆时针旋转的
+            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 0, 23, new babylon.Vector3(0, 0, 0), scene) //add camera 
+            //the second parameter is optional and default to false
+            //when false then default actions on a canvas event are prevent set to true to allow canvas default actions
+            // such as gamepad may be used a controller
+            camera.attachControl(canvas, true) //attach the canvas
+
+
+
+
+
+            return scene
+        }
+
+        let scene = createScene() //call the createscene function
+
+        //register a render loop to repeat render the scene
+        engine.runRenderLoop(function () {
+            scene.render()
+        })
+
+        window.addEventListener('resize', function () {
+            engine.resize()
+        })
+
+
+        let sphere = new babylon.MeshBuilder.CreateSphere('sphere', { diameter: 2 }, scene)
+        sphere.position.y = 1.5
+        let ground1 = babylon.MeshBuilder.CreateGround('ground1', { width: 12, height: 12, subdivisions: 4 }, scene)
+
+
+        //create a light 
+        let light = new babylon.SpotLight('light', new babylon.Vector3(0, 10, 0), new babylon.Vector3(0, -1, 0), 50 * angle, 22, scene)
+        light.projectionTexture = new babylon.Texture('./discoball.jpg', scene)
+
+        var shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+        shadowGenerator.addShadowCaster(sphere)
+
+
+
+        // Move light in the scene
+        var curTime = 0;
+        scene.onBeforeRenderObservable.add(() => {
+            curTime += engine.getDeltaTime();
+            light.position.z = Math.sin(curTime / 1000) * 5
+            light.position.x = Math.cos(curTime / 1000) * 5
+            light.setDirectionToTarget(BABYLON.Vector3.Zero());
+
+        })
+
+
+
+
+    </script>
+</body>
+
+</html>
