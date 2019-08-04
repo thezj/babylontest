@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.bootcss.com/babylonjs/4.1.0-alpha.9/babylon.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            background: #e3e3e3;
+        }
+
+        .renderCanvas {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            margin: 10%;
+            border: 1px solid gray;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="renderCanvas"></canvas>
+    <script>
+        // 190716
+        let babylon = BABYLON
+        let canvas = document.querySelector('.renderCanvas') //get the canvas element 
+        let engine = new babylon.Engine(canvas, true) //generate the babylon 3d engine
+        let angle = Math.PI / 180 // define a angle unit
+
+        //add the create scene function
+        let createScene = function () {
+            let scene = new babylon.Scene(engine) //create the scene space
+            //水平角和俯仰角都是逆时针旋转的
+            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 0, 23, new babylon.Vector3(0, 0, 0), scene) //add camera 
+            //the second parameter is optional and default to false
+            //when false then default actions on a canvas event are prevent set to true to allow canvas default actions
+            // such as gamepad may be used a controller
+            camera.attachControl(canvas, true) //attach the canvas
+
+
+
+
+
+            return scene
+        }
+
+        let scene = createScene() //call the createscene function
+
+        //register a render loop to repeat render the scene
+        engine.runRenderLoop(function () {
+            scene.render()
+        })
+
+        window.addEventListener('resize', function () {
+            engine.resize()
+        })
+
+        let box1 = babylon.Mesh.CreateBox('box1', 1, scene)
+        box1.position.x = 1
+        box1.position.z = 3
+        box1.position.y = 1
+
+        let sphere = new babylon.MeshBuilder.CreateSphere('sphere', { diameter: 2 }, scene)
+        sphere.position.y = 1.5
+        let ground1 = babylon.MeshBuilder.CreateGround('ground1', { width: 12, height: 12, subdivisions: 4 }, scene)
+        ground1.receiveShadows = true
+
+
+        //create a light 
+        let light = new babylon.SpotLight('light', new babylon.Vector3(0, 10, 0), new babylon.Vector3(0, -1, 0), 90 * angle, 22, scene)
+        var shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+        shadowGenerator.addShadowCaster(sphere)
+        shadowGenerator.addShadowCaster(box1)
+
+        /*
+        parameter1 name
+        parameter2 the property concerned
+        parameter3 frames per second requested 
+        parameter4 type of change
+        BABYLON.Animation.ANIMATIONTYPE_FLOAT
+        BABYLON.Animation.ANIMATIONTYPE_VECTOR2
+        BABYLON.Animation.ANIMATIONTYPE_VECTOR3
+        BABYLON.Animation.ANIMATIONTYPE_QUATERNION
+        BABYLON.Animation.ANIMATIONTYPE_MATRIX
+        BABYLON.Animation.ANIMATIONTYPE_COLOR3
+        parameter5 
+        Use previous values and increment it: BABYLON.Animation.ANIMATIONLOOPMODE_RELATIVE
+        Restart from initial value: BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE
+        Keep their final value: BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+        **/
+        let animationbox = new babylon.Animation('animation1', 'scaling.x', 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE)
+        let keysbox = [{
+            frame: 0,
+            value: 1,
+        }, {
+            frame: 20,
+            value: 0.2,
+        }, {
+            frame: 100,
+            value: 1,
+        },]
+        animationbox.setKeys(keysbox)
+        box1.animations.push(animationbox)
+
+        let animationbox2 = new babylon.Animation('animation1', 'position.z', 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE)
+        let keysbox2 = [{
+            frame: 0,
+            value: 3,
+        }, {
+            frame: 20,
+            value: 1,
+        }, {
+            frame: 100,
+            value: 3,
+        },]
+        animationbox2.setKeys(keysbox2)
+        box1.animations.push(animationbox2)
+
+        // 3 parameters to create an event:
+        // - The frame at which the event will be triggered
+        // - The action to execute
+        // - A boolean if the event should execute only once (false by default)
+        var event1 = new BABYLON.AnimationEvent(50, function cb() { console.log("Yeah!"); }, true);
+        // Attach your event to your animation
+        animationbox2.addEvent(event1);
+
+        let activeanimation = scene.beginAnimation(box1, 0, 100, false)
+        console.log(2)
+
+
+
+        setTimeout(async () => {
+            console.log(0)
+            await activeanimation.waitAsync();
+            console.log(1)
+        })
+        console.log(4)
+
+        setTimeout(() => {
+            activeanimation.pause()
+        }, 4000);
+
+        /*
+        You can use an extended function to create a quick animation:
+        Animation.CreateAndStartAnimation = function(name, mesh, targetProperty, framePerSecond, totalFrame, from, to, loopMode);
+        */
+
+        let activeanimation2 = babylon.Animation.CreateAndStartAnimation('spherescale', sphere, 'scaling.x', 30, 120, 1, 2)
+        let activeanimation3 = babylon.Animation.CreateAndStartAnimation('spherescale', sphere, 'scaling.z', 30, 120, 1, 2)
+        let activeanimation4 = babylon.Animation.CreateAndStartAnimation('spherescale', sphere, 'scaling.y', 30, 120, 1, 2)
+
+    </script>
+</body>
+
+</html>

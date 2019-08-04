@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.bootcss.com/babylonjs/4.1.0-alpha.9/babylon.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            background: #e3e3e3;
+        }
+
+        .renderCanvas {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            margin: 10%;
+            border: 1px solid gray;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="renderCanvas"></canvas>
+    <script>
+        // 190716
+        let babylon = BABYLON
+        let canvas = document.querySelector('.renderCanvas') //get the canvas element 
+        let engine = new babylon.Engine(canvas, true) //generate the babylon 3d engine
+        let angle = Math.PI / 180 // define a angle unit
+
+        //add the create scene function
+        let createScene = function () {
+
+            let scene = new babylon.Scene(engine) //create the scene space
+
+            //create a light 
+            let light = new babylon.SpotLight('light', new babylon.Vector3(0, 15, 0), new babylon.Vector3(0, -1, 0), 90 * angle, 22, scene)
+            let light2 = new babylon.SpotLight('light', new babylon.Vector3(0, 0, 0), new babylon.Vector3(0, 1, 0), 90 * angle, 22, scene)
+
+            //add camera 
+            let camera = new babylon.FreeCamera('FreeCamera', new babylon.Vector3(0, 0, 0), scene)
+            //attach the canvas
+            camera.attachControl(canvas, true)
+            camera.position = new babylon.Vector3(0, 9, 0)
+
+
+            let ground1 = babylon.MeshBuilder.CreateGround('ground1', { width: 112, height: 112, subdivisions: 4 }, scene)
+            ground1.material = new babylon.StandardMaterial('ground1', scene)
+            ground1.material.diffuseColor = new babylon.Color3(1, 1, 1)
+            ground1.material.backFaceCulling = false
+            ground1.receiveShadows = true
+
+            let box1 = babylon.MeshBuilder.CreateBox('box1', { height: 2, width: 2, depth: 2 }, scene)
+            box1.position = new babylon.Vector3(2, 12, 2)
+            box1.material = new BABYLON.StandardMaterial("Mat", scene);
+            box1.material.diffuseTexture = new babylon.Texture('./crate.png', scene)
+            box1.material.diffuseTexture.hasAlpha = true
+
+
+            var shadowGenerator = new BABYLON.ShadowGenerator(1024, light);
+            shadowGenerator.addShadowCaster(box1)
+
+            //define and apply gravity
+            scene.gravity = new babylon.Vector3(0, -9.81, 0)
+            scene.collisionsEnabled = true
+
+            //applied graviy to this camera
+            camera.checkCollisions = true
+            camera.applyGravity = true
+            camera.setTarget(new babylon.Vector3(0, 0, 0))
+            camera.ellipsoid = new babylon.Vector3(2, 2, 2)
+
+            //define an ellipsoid 椭圆 preventing our camera from getting too close to this mesh
+            // set the ellipsoid around the camera 
+
+            ground1.checkCollisions = true;
+            box1.checkCollisions = true;
+            box1.applyGravity = true
+       
+
+            return scene
+        }
+
+        let scene = createScene() //call the createscene function
+        //register a render loop to repeat render the scene
+        engine.runRenderLoop(function () {
+            scene.render()
+        })
+        window.addEventListener('resize', function () {
+            engine.resize()
+        })
+    </script>
+</body>
+
+</html>
