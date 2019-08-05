@@ -90,7 +90,7 @@
             ground1.checkCollisions = true;
             box1.checkCollisions = true;
             box1.applyGravity = true
-       
+
 
             return scene
         }
@@ -99,6 +99,18 @@
         //register a render loop to repeat render the scene
         engine.runRenderLoop(function () {
             scene.render()
+            let box1 = scene.getMeshByID('box1')
+            var speedCharacter = 8;
+            var gravity = -0.015;
+            var character = box1
+
+            character.ellipsoid = new BABYLON.Vector3(0.5, 1.0, 0.5);
+            character.ellipsoidOffset = new BABYLON.Vector3(0, 1.0, 0);
+
+            var forwards = new BABYLON.Vector3(parseFloat(Math.sin(character.rotation.y)) / speedCharacter, gravity, parseFloat(Math.cos(character.rotation.y)) / speedCharacter);
+            forwards.negate();
+            character.moveWithCollisions(forwards);
+            // or
         })
         window.addEventListener('resize', function () {
             engine.resize()
