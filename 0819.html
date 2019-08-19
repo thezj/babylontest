@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.bootcss.com/babylonjs/4.1.0-alpha.9/babylon.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            background: #e3e3e3;
+        }
+
+        .renderCanvas {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            margin: 10%;
+            border: 1px solid gray;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="renderCanvas"></canvas>
+    <script>
+        // 190716
+        let babylon = BABYLON
+        let canvas = document.querySelector('.renderCanvas') //get the canvas element 
+        let engine = new babylon.Engine(canvas, true) //generate the babylon 3d engine
+        let angle = Math.PI / 180 // define a angle unit
+
+        //add the create scene function
+        let createScene = function () {
+
+            let scene = new babylon.Scene(engine) //create the scene space
+
+            //create a light 
+            let light = new babylon.SpotLight('light', new babylon.Vector3(0, 123, 0), new babylon.Vector3(0, -1, 0), 120 * angle, 22, scene)
+
+            //add camera 
+            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 80, 30, new babylon.Vector3(73, 87, 0), scene)
+            //attach the canvas
+            camera.setTarget(new babylon.Vector3(0, 0, 0))
+            camera.attachControl(canvas, true)
+            let ground = babylon.Mesh.CreateGround('gound', 500, 500, 10, scene)
+
+
+            let box1 = babylon.Mesh.CreateBox('box', 4.0, scene)
+            box1.material = new babylon.StandardMaterial('matbox1', scene)
+            box1.material.diffuseColor = new babylon.Color3(1, 0, 0)
+            box1.isPickable = false
+            box1.position.y = 2
+            box1.scaling.z = 2
+
+            let box2 = babylon.Mesh.CreateBox('box2', 8.0, scene)
+            box2.material = new babylon.StandardMaterial('matbox2', scene)
+            box2.material.diffuseColor = new babylon.Color3(0, 0, 1)
+            box2.position = new BABYLON.Vector3(-20, 4, 0);
+
+
+            let box3 = box2.clone()
+            box3.position.x -= 20
+
+
+
+            let box4 = babylon.Mesh.CreateBox('box4', 8.0, scene)
+            box4.material = new babylon.StandardMaterial('matbox4', scene)
+            box4.material.diffuseColor = new babylon.Color3(0, 1, 0)
+            box4.position = new BABYLON.Vector3(0, 4, 30);
+
+            let mousemovef = e => {
+                let pickresult = scene.pick(scene.pointerX, scene.pointerY)
+
+                if (pickresult.hit) {
+                    let diffx = pickresult.pickedPoint.x - box1.position.x
+                    let diffy = pickresult.pickedPoint.z - box1.position.z
+                    box1.rotation.y = Math.atan2(diffx, diffy)
+                }
+
+            }
+
+            scene.onPointerMove = function () {
+                mousemovef();
+            };
+
+            function vectolocal(vector, mesh) {
+                let m = mesh.getWorldMatrix()
+                return babylon.Vector3.TransformCoordinates(vector, m)
+            }
+
+            function predicate(mesh) {
+                if (mesh == box2 || mesh == box1) {
+                    return false;
+                }
+                return true;
+            }
+
+            function castRay() {
+                let origin = box1.position
+                let forward = new babylon.Vector3(0, 0, 1)
+                forward = vectolocal(forward, box1)
+
+                let direction = forward.subtract(origin)
+                direction = babylon.Vector3.Normalize(direction)
+
+                let length = 100
+                let ray = new babylon.Ray(origin, direction, length)
+
+                let rayhelper = new babylon.RayHelper(ray)
+                rayhelper.show(scene)
+
+                let hit = scene.multiPickWithRay(ray)
+
+                hit.map(hit => {
+                    if (hit.pickedMesh) {
+                        hit.pickedMesh.scaling.y += 0.04
+                    }
+                })
+
+
+            }
+
+            scene.registerBeforeRender(() => {
+                castRay()
+            })
+
+            return scene
+        }
+
+        let scene = createScene() //call the createscene function
+
+        window.addEventListener('resize', function () {
+            engine.resize()
+        })
+
+        //register a render loop to repeat render the scene
+        engine.runRenderLoop(function () {
+            scene.render()
+        })
+    </script>
+</body>
+
+</html>
