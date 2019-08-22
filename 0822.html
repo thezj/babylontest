@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/ammo.js"></script>
+    <script src="https://preview.babylonjs.com/cannon.js"></script>
+    <script src="https://preview.babylonjs.com/Oimo.js"></script>
+    <script src="https://preview.babylonjs.com/gltf_validator.js"></script>
+    <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+    <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+    <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+    <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            background: #e3e3e3;
+        }
+
+        .renderCanvas {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            margin: 10%;
+            border: 1px solid gray;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="renderCanvas"></canvas>
+    <script>
+        // 190716
+        let babylon = BABYLON
+        let canvas = document.querySelector('.renderCanvas') //get the canvas element 
+        let engine = new babylon.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }) //generate the babylon 3d engine
+        let angle = Math.PI / 180 // define a angle unit
+
+        //add the create scene function
+        let createScene = function () {
+
+            let scene = new babylon.Scene(engine) //create the scene space
+            //create a light 
+            let light = new babylon.SpotLight('light', new babylon.Vector3(0, 123, 0), new babylon.Vector3(0, -1, 0), 120 * angle, 22, scene)
+            //add camera 
+            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 80, 3, new babylon.Vector3(3, 1, 0), scene)
+            //attach the canvas
+            camera.setTarget(new babylon.Vector3(0, 0, 0))
+            camera.attachControl(canvas, true)
+            let ground = babylon.Mesh.CreateGround('gound', 500, 500, 10, scene)
+            ground.isPickable = false
+
+            //sprite manager
+            let spriteManagerTree = new babylon.SpriteManager('treemanager', './palm.png', 2000, 800, scene)
+            let spriteManagerPlayer = new babylon.SpriteManager('playermanager', './player.png', 2, { height: 64, width: 64 }, scene)
+            spriteManagerPlayer.isPickable = true
+            //sprite packed manager
+            //json file contain the positional data of the sprite in the packed spritesheet
+            //image file and the json file should have the same name and be in the same folder
+            let spm = new babylon.SpritePackedManager('spm', 'pack1.png', 4, scene)
+
+            //create sprite instance
+            let tree1 = new babylon.Sprite('tree1', spriteManagerTree)
+            tree1.position.y = 1
+
+            let player1 = new babylon.Sprite('player1', spriteManagerPlayer)
+            player1.position.y = 1
+            player1.position.z = 1
+            player1.invertU = -1;
+            //定义manager的可选属性为真，同时实例也需要定义
+            player1.isPickable = true
+
+            /**
+            param1:start frame
+            param2:end frame
+            param3:loop or not
+            param4:delay between the frames
+            */
+
+
+
+
+            let eye = new babylon.Sprite('eye', spm)
+            eye.position.y = 1
+            eye.position.x = -2
+            eye.cellRef = 'eye.png'
+            eye.isPickable = true
+
+            let redman = new babylon.Sprite('eye', spm)
+            redman.position.y = 1
+            redman.position.z = -1.5
+            redman.cellRef = 'redman.png'
+
+            let player1frames = [
+                [0, 10,],
+                [10, 22,],
+                [22, 36,],
+                [36, 43,]
+            ]
+            let pickCount = 0
+            player1.playAnimation(player1frames[pickCount % 4][0], player1frames[pickCount % 4][1], true, 80);
+            scene.onPointerDown = function (evt) {
+                let pickresult = scene.multiPickSprite(this.pointerX, this.pointerY)
+                for (let i = 0; i < pickresult.length; i++) {
+                    if (pickresult[i].pickedSprite && pickresult[i].pickedSprite.name == 'player1') {
+                        let player1 = pickresult[i].pickedSprite
+                        pickCount++
+                        player1.playAnimation(player1frames[pickCount % 4][0], player1frames[pickCount % 4][1], true, 80);
+                    }
+                }
+            }
+
+            return scene
+        }
+
+        let scene = createScene() //call the createscene function
+
+        window.addEventListener('resize', function () {
+            engine.resize()
+        })
+
+        //register a render loop to repeat render the scene
+        engine.runRenderLoop(function () {
+            scene.render()
+        })
+    </script>
+</body>
+
+</html>
