@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="pep.min.js"></script>
+    <script src="dat.gui.min.js"></script>
+    <script src="ammo.js"></script>
+    <script src="cannon.js"></script>
+    <script src="Oimo.js"></script>
+    <script src="gltf_validator.js"></script>
+    <script src="earcut.min.js"></script>
+    <script src="babylon.js"></script>
+    <script src="babylon.inspector.bundle.js"></script>
+    <script src="babylonjs.materials.min.js"></script>
+    <script src="babylonjs.proceduralTextures.min.js"></script>
+    <script src="babylonjs.postProcess.min.js"></script>
+    <script src="babylonjs.loaders.js"></script>
+    <script src="babylonjs.serializers.min.js"></script>
+    <script src="babylon.gui.min.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            background: #e3e3e3;
+        }
+
+        .renderCanvas {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            margin: 10%;
+            border: 1px solid gray;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="renderCanvas"></canvas>
+    <script>
+        // 190716
+        let babylon = BABYLON
+        let canvas = document.querySelector('.renderCanvas') //get the canvas element 
+        let engine = new babylon.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }) //generate the babylon 3d engine
+        let angle = Math.PI / 180 // define a angle unit
+
+        //add the create scene function
+        let createScene = function () {
+
+            let scene = new babylon.Scene(engine) //create the scene space
+            //create a light 
+            let light = new babylon.SpotLight('light', new babylon.Vector3(0, 123, 0), new babylon.Vector3(0, -1, 0), 120 * angle, 22, scene)
+            //add camera 
+            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 80, 3, new babylon.Vector3(3, 1, 0), scene)
+            //attach the canvas
+            camera.setTarget(new babylon.Vector3(0, 0, 0))
+            camera.attachControl(canvas, true)
+            let ground = babylon.Mesh.CreateGround('gound', 500, 500, 10, scene)
+            ground.isPickable = false
+            ground.material = new babylon.StandardMaterial('ground', scene)
+            ground.material.backFaceCulling = false
+
+
+            //create box 
+            for (let i = 0; i < 10; i++) {
+                let box = babylon.Mesh.CreateBox('b', 10, scene)
+                box.position = new babylon.Vector3(-i * 50, 10, 0)
+                box.material = new babylon.StandardMaterial('yellowmat', scene)
+                box.material.diffuseColor = new babylon.Color3(1, 1, 0)
+            }
+
+            //scene clear color 
+            scene.clearColor = new babylon.Color3(1, 1, 1)
+            //the ambientColor on the scene is a very powerful and influential evironment adjustment 
+            // scene.ambientColor = new babylon.Color3(0, 1, 0)
+
+
+            //skybox
+            let evironmentTexture = new babylon.CubeTexture('./skybox/skybox', scene)
+            scene.createDefaultSkybox(evironmentTexture, true, 1000)
+
+            //fog
+            scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
+            scene.fogDensity = 0.008
+            scene.fogStart = 20
+            scene.fogEnd = 60
+            // scene.fogColor = new babylon.Color3(1, 1, 8)
+
+            return scene
+        }
+
+        let scene = createScene() //call the createscene function
+
+        window.addEventListener('resize', function () {
+            engine.resize()
+        })
+
+        //register a render loop to repeat render the scene
+        engine.runRenderLoop(function () {
+            scene.render()
+        })
+    </script>
+</body>
+
+</html>
