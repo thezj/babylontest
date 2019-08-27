@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/ammo.js"></script>
+    <script src="https://preview.babylonjs.com/cannon.js"></script>
+    <script src="https://preview.babylonjs.com/Oimo.js"></script>
+    <script src="https://preview.babylonjs.com/gltf_validator.js"></script>
+    <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+    <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+    <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+    <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            background: #e3e3e3;
+        }
+
+        .renderCanvas {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            margin: 10%;
+            border: 1px solid gray;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas class="renderCanvas"></canvas>
+    <script>
+        // 190716
+        let babylon = BABYLON
+        let canvas = document.querySelector('.renderCanvas') //get the canvas element 
+        let engine = new babylon.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }) //generate the babylon 3d engine
+        let angle = Math.PI / 180 // define a angle unit
+
+        //add the create scene function
+        let createScene = function () {
+
+            let scene = new babylon.Scene(engine) //create the scene space
+            //create a light 
+            let light = new babylon.SpotLight('light', new babylon.Vector3(0, 123, 0), new babylon.Vector3(0, -1, 0), 120 * angle, 22, scene)
+            //add camera 
+            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 80, 3, new babylon.Vector3(3, 1, 0), scene)
+            //attach the canvas
+            camera.setTarget(new babylon.Vector3(0, 0, 0))
+            camera.attachControl(canvas, true)
+
+            let ground = babylon.Mesh.CreateGround('gound', 500, 500, 10, scene)
+            ground.isPickable = false
+            // Create a default skybox with an environment.
+            var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("./environment.dds", scene);
+            var currentSkybox = scene.createDefaultSkybox(hdrTexture, true);
+            // Append glTF model to scene.
+            BABYLON.SceneLoader.Append("./", "first.babylon", scene, function (scene) {
+
+            });
+
+            let sphere = new babylon.MeshBuilder.CreateSphere('sphere', { diameter: 2 }, scene)
+        sphere.position.y = 1.5
+
+
+            return scene
+        }
+
+        let scene = createScene() //call the createscene function
+
+        window.addEventListener('resize', function () {
+            engine.resize()
+        })
+
+        //register a render loop to repeat render the scene
+        engine.runRenderLoop(function () {
+            scene.render()
+        })
+    </script>
+</body>
+
+</html>
