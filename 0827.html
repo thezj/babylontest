@@ -61,57 +61,40 @@
 
             let scene = new babylon.Scene(engine) //create the scene space
             //create a light 
-            let light = new babylon.SpotLight('light', new babylon.Vector3(0, 223, 0), new babylon.Vector3(0, -1, 0), 120 * angle, 42, scene)
+            var light = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(-21, -10, -21), scene);
+            light.position = new BABYLON.Vector3(20, 5, 20);
+
+
             //add camera 
-            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 80, 3, new babylon.Vector3(3, 1, 0), scene)
-            camera.upperBetaLimit = angle * 70
-            camera.lowerRadiusLimit = 30
+            let camera = new babylon.ArcRotateCamera('camera', angle * 0, angle * 180, 0, new babylon.Vector3(20, 26, -60), scene)
             //attach the canvas
-            camera.setTarget(new babylon.Vector3(0, 0, 0))
+            camera.setTarget(new babylon.Vector3(10, 6, -20))
             camera.attachControl(canvas, true)
-            let ground = babylon.Mesh.CreateGroundFromHeightMap('gound', "./worldHeightMap.jpg", 400, 200, 250, 0, 20, scene, false, function () {
-
-            })
+            let ground = babylon.Mesh.CreateGround('gound', 500, 500, 10, scene)
             ground.isPickable = false
-            ground.material = new babylon.StandardMaterial('ground', scene)
+            ground.material = new babylon.StandardMaterial()
             ground.material.backFaceCulling = false
-            ground.material.diffuseTexture = new babylon.Texture('./earth.jpg', scene)
 
 
+            let box1 = new babylon.Mesh.CreateBox('box1', 10, scene)
+            box1.position = new babylon.Vector3(10, 6, -20)
 
 
-            //create box 
-            for (let i = 0; i < 10; i++) {
-                let box = babylon.Mesh.CreateBox('b', 10, scene)
-                box.position = new babylon.Vector3(-i * 50 + 200, 10, 0)
-                box.material = new babylon.StandardMaterial('yellowmat', scene)
-                box.material.diffuseColor = new babylon.Color3(1, 1, 0)
-            }
+            let shadowGenerator = new babylon.ShadowGenerator(1024, light) //shadow generator
+            shadowGenerator.getShadowMap().renderList.push(box1) //who emit the shadow
+            ground.receiveShadows = true //who receive the shadow
+            light.shadowMinZ = 3;
+            light.shadowMaxZ = 120;
 
-            //scene clear color 
-            scene.clearColor = new babylon.Color3(1, 1, 1)
-            //the ambientColor on the scene is a very powerful and influential evironment adjustment 
-            // scene.ambientColor = new babylon.Color3(0, 1, 0)
-
-
-            //skybox
-            let evironmentTexture = new babylon.CubeTexture('./skybox/skybox', scene)
-            scene.createDefaultSkybox(evironmentTexture, true, 1000)
-
-            //fog
-            scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
-            scene.fogDensity = 0.004
-            scene.fogStart = 20
-            scene.fogEnd = 60
-            // scene.fogColor = new babylon.Color3(1, 1, 8)
-
-
-            scene.registerBeforeRender(i => {
-                light.position.x -= 0.5
-                if (light.position.x <= -200) {
-                    light.position.x = 200
-                }
-            })
+            //shadow filter
+            // shadowGenerator.useBlurExponentialShadowMap = true
+            // shadowGenerator.useKernelBlur = true
+            // shadowGenerator.blurKernel = 66
+            // shadowGenerator.blurBoxOffset = 0
+            // shadowGenerator.blurScale = 1
+            shadowGenerator.useContactHardeningShadow = true;
+            shadowGenerator.setDarkness(0.4);
+            shadowGenerator.bias = 0.01;
 
             return scene
         }
